@@ -11,8 +11,8 @@ module GameMachine
       end
 
       GameMachine.logger.info "Using name #{name}"
-      GameMachine::Application.initialize!(name,cluster)
-      GameMachine::Application.start
+      app = GameMachine::Application.create(name,cluster)
+      app.start
       if console
         binding.pry
       end

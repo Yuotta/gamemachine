@@ -3,6 +3,12 @@ module GameMachine
     class Game < Actor::Base 
       include Commands
 
+      attr_reader :registered
+
+      def post_init(*args)
+        @registered = args[0]
+      end
+
       def on_receive(message)
         if message.is_a?(MessageLib::ClientMessage)
           if message.get_entity_list
@@ -24,7 +30,7 @@ module GameMachine
           component_names = entity.component_names
           GameMachine.logger.debug("Dispatch: #{entity} #{component_names.to_a.inspect}")
           next if component_names.empty?
-          Application.registered.each do |klass|
+          registered.each do |klass|
             dispatched = false
             klass.aspects.each do |aspect|
               next if dispatched

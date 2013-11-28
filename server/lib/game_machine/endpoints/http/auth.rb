@@ -9,14 +9,22 @@ module GameMachine
           alias_method :create, :new
         end
 
+        def port
+          '8080'
+        end
+
+        def host
+          'localhost'
+        end
+
         def getEndpointUri
-          return "jetty:http://#{Application.config.http_host}:#{Application.config.http_port}/auth?traceEnabled=false"
+          return "jetty:http://#{host}:#{port}/auth?traceEnabled=false"
         end
 
         def onReceive(message)
           params = message_to_params(message)
           if auth = login(params['username'],params['password'])
-            server = "#{Application.config.http_host}:#{Application.config.http_port}"
+            server = "#{host}:#{port}"
             response = {:server => server, :authtoken => auth}
           else
             response = {:error => 'bad login'}
@@ -27,7 +35,8 @@ module GameMachine
         private
 
         def login(user,pass)
-          Application.auth_handler.authorize(user,pass)
+          #Application.auth_handler.authorize(user,pass)
+          'authorized'
         end
 
         def message_to_params(message)

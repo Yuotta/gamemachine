@@ -5,6 +5,11 @@ module GameMachine
         alias_method :apply, :new
         alias_method :create, :new
       end
+ 
+      attr_reader :game_handler
+      def post_init(*args)
+        @game_handler = args[0]
+      end
 
       def preStart
         @clients = {}
@@ -23,7 +28,7 @@ module GameMachine
             client_message = create_client_message(message.bytes,client_id)
           end
 
-          Actor::Base.find(Application.config.game_handler).
+          Actor::Base.find(game_handler).
             send_message(client_message, :sender => get_self)
         elsif message.is_a?(MessageLib::ClientMessage)
           if @clients[message.client_connection.id]

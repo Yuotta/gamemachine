@@ -3,14 +3,13 @@ require 'forwardable'
 module GameMachine
   module AuthHandlers
     class Base
-      include Singleton
       extend Forwardable
 
       def_delegators :@handler, :authorize, :authtoken_for, :load_users,
         :add_user
 
-      def initialize
-        @handler = Application.config.auth_handler.constantize.new
+      def initialize(handler_name)
+        @handler = handler_name.constantize.new
       end
 
       def set_handler(handler_name)

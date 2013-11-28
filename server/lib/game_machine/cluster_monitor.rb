@@ -36,7 +36,7 @@ module GameMachine
     def preStart
       if getContext.system.name == 'cluster'
         @cluster = JavaLib::Cluster.get(getContext.system)
-        Akka.instance.init_cluster!(@cluster.self_address.to_string)
+        app.akka.init_cluster!(@cluster.self_address.to_string)
         @cluster.subscribe(getSelf, JavaLib::ClusterEvent::ClusterDomainEvent.java_class)
       end
       @observers = []
@@ -53,7 +53,7 @@ module GameMachine
 
       elsif message.is_a?(JavaLib::ClusterEvent::MemberRemoved)
         address = message.member.address.to_string
-        Akka.instance.hashring.remove_bucket(address)
+        app.akka.hashring.remove_bucket(address)
         self.class.remove_cluster_member(address)
         self.class.remove_remote_member(address)
 
@@ -62,7 +62,7 @@ module GameMachine
       elsif message.is_a?(JavaLib::ClusterEvent::MemberUp)
         address = message.member.address.to_string
         self.class.add_cluster_member(address,message.member)
-        Akka.instance.hashring.add_bucket(address)
+        app.akka.hashring.add_bucket(address)
 
         unless address == @cluster.self_address.to_string
           self.class.add_remote_member(address,message.member)
@@ -76,7 +76,7 @@ module GameMachine
         message.get_members.each do |member|
           address = member.address.to_string
           self.class.add_cluster_member(address,member)
-          Akka.instance.hashring.add_bucket(address)
+          app.akka.hashring.add_bucket(address)
           unless address == @cluster.self_address.to_string
             self.class.add_remote_member(address,member)
           end

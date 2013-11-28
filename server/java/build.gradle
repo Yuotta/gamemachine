@@ -49,6 +49,9 @@ dependencies {
   compile 'redis.clients:jedis:2.2.1'
   //compile 'org.dyn4j:dyn4j:3.1.4'
   compile 'org.mapdb:mapdb:0.9.5'
+  compile 'org.scalatest:scalatest_2.10:2.0.1-SNAP3'
+  compile 'junit:junit:4.11'
+  
   //compile 'org.apache.httpcomponents:httpclient:4.3.1'
   //compile 'org.jbox2d:jbox2d:2.2.1.1'
   //compile fileTree(dir: 'third_party/libgdx', include: '*.jar')

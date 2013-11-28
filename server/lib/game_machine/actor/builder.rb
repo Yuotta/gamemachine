@@ -9,20 +9,23 @@ module GameMachine
       # remaining arguments are optional and will be passed to post_init
       # @param args 
       # @return self
+      attr_reader :application, :klass, :actor_system
       def initialize(*args)
+        @application = args.shift
         @klass = args.shift
-        @name = @klass.name
+        @name = klass.name.sub('GameMachine::','').sub('::','_').underscore
+        puts "ACTOR_NAME= #{@name}"
         @create_hashring = false
         @hashring_size = 0
-        @props = JavaLib::Props.new(Actor::Factory.new(@klass,args))
-        @actor_system = Akka.instance.actor_system
+        @props = JavaLib::Props.new(Actor::Factory.new(application,@name,klass,args))
+        @actor_system = application.akka.actor_system
       end
 
       # Sets the parent actor
       # @param parent
       # @return self
       def with_parent(parent)
-        @actor_system = parent
+        actor_system = parent
         self
       end
 
@@ -68,10 +71,10 @@ module GameMachine
         if @create_hashring
           hashring = create_hashring(@hashring_size)
           hashring.buckets.map do |bucket_name|
-            @actor_system.actor_of(@props, bucket_name)
+            actor_system.actor_of(@props, bucket_name)
           end
         else
-          @actor_system.actor_of(@props, @name)
+          actor_system.actor_of(@props, @name)
         end
       end
 

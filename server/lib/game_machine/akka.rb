@@ -1,21 +1,19 @@
-require 'singleton'
 module GameMachine
   class Akka
-    include Singleton
     extend Forwardable
 
     attr_reader :hashring, :address, :app_config
 
-    def self.address_for(server)
-      host = AppConfig.instance.server_config(server).akka_host
-      port = AppConfig.instance.server_config(server).akka_port
-      "akka.tcp://#{Akka.instance.config_name}@#{host}:#{port}"
+    def initialize(app_config)
+      @app_config = app_config
+      @address = address_for(app_config.config.name)
+      @hashring = Hashring.new([@address])
     end
 
-    def initialize!
-      @app_config = AppConfig.instance
-      @address = self.class.address_for(app_config.config.name)
-      @hashring = Hashring.new([@address])
+    def address_for(server)
+      host = app_config.server_config(server).akka_host
+      port = app_config.server_config(server).akka_port
+      "akka.tcp://#{config_name}@#{host}:#{port}"
     end
 
     def init_cluster!(address)
@@ -42,7 +40,7 @@ module GameMachine
     def start
       @actor_system = Actor::System.new(config_name,akka_config)
       @actor_system.create!
-      JavaLib::GameMachineLoader.new.run(actor_system,Application.config.game_handler)
+      JavaLib::GameMachineLoader.new.run(actor_system,'deprecated')
       start_camel_extension
     end
 
@@ -60,7 +58,7 @@ module GameMachine
     end
 
     def set_seeds(config)
-      seeds = Application.config.seeds.map do |seed| 
+      seeds = app_config.config.seeds.map do |seed| 
         seed_host = app_config.server_config(server).akka_host
         seed_port = app_config.instance.server_config(server).akka_port
         "\"akka.tcp://cluster@#{seed_host}:#{seed_port}\""
@@ -77,7 +75,7 @@ module GameMachine
 
     def akka_server_config
       config = load_akka_config('standalone')
-      config = set_address(config)
+      set_address(config)
     end
 
     def load_akka_config(name)
@@ -89,7 +87,7 @@ module GameMachine
 
     def start_camel_extension
       if app_config.config.http_enabled
-        camel = JavaLib::CamelExtension.get(Akka.instance.actor_system)
+        camel = JavaLib::CamelExtension.get(actor_system)
         camel_context = camel.context
       end
     end

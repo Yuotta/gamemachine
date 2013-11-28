@@ -74,7 +74,7 @@ module GameMachine
 
       def create_topic_handler(topic)
         name = "topic#{@player_id}#{topic}"
-        builder = Actor::Builder.new(GameSystems::ChatTopic,@player_id)
+        builder = Actor::Builder.new(app,GameSystems::ChatTopic,@player_id)
         ref = builder.with_parent(context).with_name(name).start
         actor_ref = Actor::Ref.new(ref,GameSystems::ChatTopic.name)
         @topic_handlers[topic] = actor_ref

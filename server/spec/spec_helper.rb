@@ -10,21 +10,22 @@ end
 
 RSpec.configure do |config|
   config.before(:suite) do
-    GameMachine::Application.initialize!('default',true)
+    GameMachine::Application.create('default',true)
   end
 
   config.before(:each) do
-    GameMachine::Application.load_game_data
-    GameMachine::AuthHandlers::Base.instance
-    GameMachine::Application.start_actor_system
-    GameMachine::Application.start_core_systems
-    GameMachine::Application.start_handlers
-    GameMachine::Application.start_game_systems
+    app = GameMachine::Application.instance_for('default')
+    app.load_game_data
+    app.start_actor_system
+    app.start_core_systems
+    app.start_handlers
+    app.start_game_systems
     GameMachine::GameLoader.new.load_all
   end
 
   config.after(:each) do
-    GameMachine::Application.stop_actor_system
+    app = GameMachine::Application.instance_for('default')
+    app.stop_actor_system
   end
 
   config.after(:suite) do

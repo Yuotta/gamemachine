@@ -6,13 +6,13 @@ require_relative 'data_stores/redis'
 
 module GameMachine
   class DataStore
-    include Singleton
     extend Forwardable
 
     def_delegators :@store, :get, :set, :delete, :delete_all, :shutdown
 
-    def initialize
-      @store_name = Application.config.data_store
+    def initialize(store_name,couchbase_servers)
+      @store_name = store_name
+      @couchbase_servers = couchbase_servers
       connect
     end
 
@@ -30,7 +30,7 @@ module GameMachine
     end
 
     def connect_couchbase
-      @store = DataStores::Couchbase.new
+      @store = DataStores::Couchbase.new(couchbase_servers)
       @store.connect
     end
 

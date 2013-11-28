@@ -4,7 +4,8 @@ module GameMachine
     def post_init(*args)
       @players = {}
       @paths = {}
-      ClusterMonitor.find.tell('register_observer',get_self)
+      @name = args.first
+      find(:cluster_monitor).tell('register_observer',get_self)
     end
 
 
@@ -16,8 +17,8 @@ module GameMachine
 
     def replicate(message)
       GameMachine::ClusterMonitor.remote_members.keys.each do |address|
-        path = "#{address}#{self.class.local_path(self.class.name)}"
-        Actor::Ref.new(path,self.class.name).tell(message,get_self)
+        path = "#{address}#{self.class.local_path(actor_name)}"
+        Actor::Ref.new(path).tell(message,get_self)
       end
     end
 
@@ -43,21 +44,21 @@ module GameMachine
           :player_id => message.player_id,
           :client_connection => message.client_connection
         }
-        unless get_sender.path.name == 'GameMachine::PlayerGateway'
+        unless get_sender.path.name == 'player_gateway'
           replicate(message)
         end
       elsif message.send_to_player
         if player_info = @players.fetch(message.player.id,nil)
           client_connection = player_info[:client_connection]
-          if Application.config.name == client_connection.server
+          if @name == client_connection.server
             client_message = MessageLib::ClientMessage.new
             client_message.set_player(player(message.player.id))
             client_message.set_client_connection(client_connection)
             message.set_send_to_player(false)
             client_message.add_entity(message)
-            Actor::Base.find(client_connection.gateway).tell(client_message)
+            find(client_connection.gateway).tell(client_message)
           else
-            self.class.find_remote(client_connection.server).tell(message)
+            find_remote(client_connection.server,actor_name).tell(message)
           end
         else
           GameMachine.logger.info "playerinfo not found for #{message.player.id}"

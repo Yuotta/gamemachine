@@ -8,22 +8,21 @@ module GameMachine
       end
 
       def grids
-        if @grids
-          return @grids
-        else
+        unless @grids
           reset_grids
         end
+        @grids
+      end
+
+      def get(name)
+        grids.get(name)
       end
 
       def default_grid
         find_or_create('default')
       end
 
-      def find_or_create(
-        name,
-        grid_size=Application.config.world_grid_size,
-        cell_size=Application.config.world_grid_cell_size
-      )
+      def find_or_create(name, grid_size, cell_size)
         unless grids.containsKey(name)
           grids.put(name,JavaLib::Grid.new(grid_size,cell_size))
         end

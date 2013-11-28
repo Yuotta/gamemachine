@@ -5,19 +5,19 @@ module GameMachine
       # TODO lookup inactive clients, and send a client_disconnected
       # message to the request handler.  Currently clients that do not
       # send a logout get left in the world
-      attr_reader :game_handler
+      attr_reader :game_handler, :host, :port, :server_name
       def post_init(*args)
-        @game_handler = Application.config.game_handler
+        @host = args[0]
+        @port = args[1]
+        @game_handler = args[2]
+        @server_name = args[3]
         @clients = {}
         @socket = nil
       end
 
       def preStart
         mgr = JavaLib::Udp.get(getContext.system).getManager
-        inet = JavaLib::InetSocketAddress.new(
-          Application.config.udp_host,
-          Application.config.udp_port
-        )
+        inet = JavaLib::InetSocketAddress.new(host, port)
         mgr.tell( JavaLib::UdpMessage.bind(getSelf,inet), getSelf)
       end
 
@@ -63,7 +63,7 @@ module GameMachine
       def create_client_message(data,client_id)
         MessageLib::ClientMessage.parse_from(data).set_client_connection(
           MessageLib::ClientConnection.new.set_id(client_id).set_gateway(self.class.name).
-          set_server(Application.config.name)
+          set_server(server_name)
         )
       end
 

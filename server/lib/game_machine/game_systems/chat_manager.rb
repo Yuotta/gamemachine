@@ -13,10 +13,11 @@ module GameMachine
     # @aspects LeaveChat Player
     class ChatManager < Actor::Base
 
-
-      aspect %w(ChatMessage Player)
-      aspect %w(JoinChat Player)
-      aspect %w(LeaveChat Player)
+      def configure_aspects
+        aspect %w(ChatMessage Player)
+        aspect %w(JoinChat Player)
+        aspect %w(LeaveChat Player)
+      end
 
       def post_init(*args)
         @chat_actors = {}
@@ -59,7 +60,7 @@ module GameMachine
 
       def create_child(player_id)
         name = child_name(player_id)
-        builder = Actor::Builder.new(GameSystems::Chat,player_id)
+        builder = Actor::Builder.new(app,GameSystems::Chat,player_id)
         child = builder.with_parent(context).with_name(name).start
         @chat_actors[player_id] = Actor::Ref.new(child,GameSystems::Chat.name)
         GameMachine.logger.debug "Chat child for #{player_id} created"

@@ -6,12 +6,17 @@ module GameMachine
 
       def_delegators :@client, :get, :set, :delete, :shutdown
 
+      attr_reader :server_urls
+      def initialize(server_urls)
+        @server_urls = server_urls
+      end
+
       def connect
         @client ||= JavaLib::CouchbaseClient.new(servers, 'default'.to_java_string, ''.to_java_string)
       end
 
       def servers
-        Application.config.couchbase_servers.map {|server| java.net.URI.new(server)}
+        server_urls.map {|server| java.net.URI.new(server)}
       end
     end
   end

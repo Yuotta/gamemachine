@@ -3,9 +3,11 @@ module GameMachine
 
     class Ref
 
-      def initialize(path_or_actor_ref,metric_name=nil)
+      attr_reader :actor_system
+
+      def initialize(path_or_actor_ref,actor_system=nil)
+        @actor_system = actor_system
         @path_or_actor_ref = path_or_actor_ref
-        @metric_name = metric_name
       end
 
       def send_message(message,options={})
@@ -63,7 +65,7 @@ module GameMachine
       end
 
       def actor_selection
-        Akka.instance.actor_system.actor_selection(@path_or_actor_ref)
+        actor_system.actor_selection(@path_or_actor_ref)
       end
 
     end

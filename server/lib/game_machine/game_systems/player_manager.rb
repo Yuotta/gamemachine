@@ -19,7 +19,7 @@ module GameMachine
       def create_player_controller(message)
         if controller_class = Actor::Base.player_controller
           id = message.player.id
-          builder = Actor::Builder.new(controller_class,message)
+          builder = Actor::Builder.new(app,controller_class,message)
           child = builder.with_parent(context).with_name(id).start
           PLAYER_CONTROLLERS[id] = child
         end

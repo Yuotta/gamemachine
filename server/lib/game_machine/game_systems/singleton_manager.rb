@@ -33,22 +33,24 @@ module GameMachine
     #   GameMachine::GameSystems::SingletonManager.find.tell(entity)
     class SingletonManager < Actor::Base
       
-      aspect %w(CreateSingleton)
-      aspect %w(NotifySingleton)
-      aspect %w(DestroySingleton)
+      def configure_aspects
+        aspect %w(CreateSingleton)
+        aspect %w(NotifySingleton)
+        aspect %w(DestroySingleton)
+      end
 
       def post_init(*args)
-        router_count = Application.config.singleton_manager_router_count
+        router_count = args[0]
+        update_interval = args[1]
         @actor_refs = create_singleton_routers(router_count)
 
         @slice_size = router_count / 10
         @slices = @actor_refs.each_slice(@slice_size).to_a
-        update_interval = Application.config.singleton_manager_update_interval
         schedule_update(update_interval)
       end
 
       def create_singleton_routers(router_count)
-          GameMachine::Actor::Builder.new(SingletonRouter).distributed(
+          GameMachine::Actor::Builder.new(app,SingletonRouter).distributed(
            router_count
           ).start
       end

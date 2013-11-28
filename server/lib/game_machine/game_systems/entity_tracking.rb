@@ -9,14 +9,16 @@ module GameMachine
     # @aspects GetNeighbors
     class EntityTracking < Actor::Base
 
-      aspect %w(TrackEntity)
-      aspect %w(GetNeighbors)
-
       attr_reader :grid
+
+      def configure_aspects
+        aspect %w(TrackEntity)
+        aspect %w(GetNeighbors)
+      end
 
       def post_init
         @entity_updates = []
-        @grid = Grid.default_grid
+        @grid = app.grid
         @paths = {}
         @width = grid.get_width
         @cell_count = grid.get_cell_count

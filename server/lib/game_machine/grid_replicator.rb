@@ -1,21 +1,23 @@
 module GameMachine
   class GridReplicator < Actor::Base
 
+    attr_reader :grid
     def post_init(*args)
       @paths = {}
       schedule_update(80)
+      @grid = app.grid
     end
 
     def on_receive(message)
       if message.is_a?(String)
-        delta = Grid.default_grid.current_delta
+        delta = grid.current_delta
         return if delta.length == 0
         GameMachine::ClusterMonitor.remote_members.keys.each do |address|
           @paths[address] ||= "#{address}#{self.class.local_path(self.class.name)}"
           Actor::Ref.new(@paths[address],self.class.name).tell(delta)
         end
       else
-        GameMachine::GameSystems::EntityTracking.grid.update_from_delta(message)
+        grid.update_from_delta(message)
       end
       
     end

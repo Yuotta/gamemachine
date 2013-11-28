@@ -1,9 +1,6 @@
-require 'singleton'
 require_relative 'settings'
 module GameMachine
   class AppConfig
-    include Singleton
-
     attr_reader :config
 
     def initialize

@@ -7,6 +7,8 @@ module GameMachine
     # @abstract All game actors inherit fromm this class
     class Base < JavaLib::UntypedActor
   
+      attr_reader :app_config, :app, :actor_name
+
       @@player_controller = nil
 
       class << self
@@ -29,29 +31,12 @@ module GameMachine
           @@player_controller
         end
 
-        def aspects
-          @aspects ||= []
-        end
-        
-        # Sets the message types that this actor knows about. Can be called
-        # multiple times.  If passed an array of more then one message type,
-        # both message types will need to be present on an entity before the
-        # system will route the entity to the actor.
-        #
-        # messages will be routed to actors based on the aspects it has
-        def aspect(new_aspects)
-          aspects << new_aspects
-          unless Application.registered.include?(self)
-            Application.register(self)
-          end
-        end
-
         def reset_hashrings
-          @@hashrings = nil
+          @hashrings = nil
         end
 
         def hashrings
-          @@hashrings ||= java.util.concurrent.ConcurrentHashMap.new
+          @hashrings ||= java.util.concurrent.ConcurrentHashMap.new
         end
 
         def hashring(name)
@@ -67,31 +52,31 @@ module GameMachine
 
         # Find a local actor by name
         # @return [Actor::Ref]
-        def find(name=self.name)
-          Actor::Ref.new(local_path(name),name)
+        def find(app,name)
+          Actor::Ref.new(local_path(name),app.akka.actor_system)
         end
 
         # Find a remote actor by name
         # @return [Actor::Ref]
-        def find_remote(server,name=self.name)
-          Actor::Ref.new(remote_path(server,name),name)
+        def find_remote(app,server,name)
+          Actor::Ref.new(remote_path(app.akka,server,name),app.akka.actor_system)
         end
 
         # Returns a local actor ref from the distributed ring of actors based
         # on a consistent hashing of the id.
         # @return [Actor::Ref]
-        def find_distributed_local(id,name=self.name)
+        def find_distributed_local(app,id,name)
           ensure_hashring(name)
-          Actor::Ref.new(local_distributed_path(id, name),name)
+          Actor::Ref.new(local_distributed_path(id, name),app.akka.actor_system)
         end
 
         # Returns an actor ref from the distributed ring of actors based
         # on a consistent hashing of the id. The actor returned can be from
         # any server in the cluster
         # @return [Actor::Ref]
-        def find_distributed(id,name=self.name)
+        def find_distributed(app,id,name)
           ensure_hashring(name)
-          Actor::Ref.new(distributed_path(id, name),name)
+          Actor::Ref.new(distributed_path(app.akka,id, name),app.akka.actor_system)
         end
 
         def local_path(name)
@@ -106,8 +91,8 @@ module GameMachine
           end
         end
 
-        def remote_path(server,name)
-          "#{Akka.address_for(server)}/user/#{name}"
+        def remote_path(akka,server,name)
+          "#{akka.address_for(server)}/user/#{name}"
         end
 
         def local_distributed_path(id,name)
@@ -115,12 +100,28 @@ module GameMachine
           "/user/#{bucket}"
         end
 
-        def distributed_path(id,name)
-          server = Akka.instance.hashring.bucket_for(id)
+        def distributed_path(akka,id,name)
+          server = akka.hashring.bucket_for(id)
           bucket = hashring(name).bucket_for(id)
           "#{server}/user/#{bucket}"
         end
+      end
 
+
+      def find(name)
+        self.class.find(app,name)
+      end
+
+      def find_remote(server,name)
+        self.class.find_remote(app,server,name)
+      end
+
+      def find_distributed_local(id,name)
+        self.class.find_distributed_local(app,id,name)
+      end
+
+      def find_distributed(id,name)
+        self.class.find_distributed(app,id,name)
       end
 
       def onReceive(message)
@@ -130,6 +131,17 @@ module GameMachine
 
       def on_receive(message)
         unhandled(message)
+      end
+
+      def aspects
+        @aspects ||= []
+      end
+      
+      def aspect(new_aspects)
+        aspects << new_aspects
+        unless app.registered.include?(self.class)
+          app.register(self.class)
+        end
       end
 
       def sender

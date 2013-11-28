@@ -11,7 +11,7 @@ module GameMachine
     attr_accessor :entities, :store
     def post_init(*args)
       @entities = {}
-      @store = DataStore.instance
+      @store = app.data_store
     end
 
     def delete_entity(entity_id)

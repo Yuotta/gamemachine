@@ -2,10 +2,11 @@ module GameMachine
   module Endpoints
     class TcpHandler < Actor::Base
 
-      attr_reader :game_handler
+      attr_reader :game_handler, :server_name
       def post_init(*args)
-        @game_handler = Application.config.game_handler
-        @name = args.first
+        @name = args[0]
+        @game_handler = args[1]
+        @server_name = args[2]
         @con_ref = nil
         @client_id = nil
         @message_buffer = MessageBuffer.new
@@ -61,7 +62,7 @@ module GameMachine
       def create_client_message(data,client_id)
         MessageLib::ClientMessage.parse_from(data).set_client_connection(
           MessageLib::ClientConnection.new.set_id(client_id).set_gateway(@name).
-          set_server(Application.config.name)
+          set_server(server_name)
         )
       end
 
